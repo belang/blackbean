@@ -19,7 +19,7 @@ class Module(object):
         super(Module, self).__init__()
         self._modes = {'0':deque()}
         self.lg = logging.Logger('module')
-        self.lg.setLevel(logging.info)
+        self.lg.setLevel(logging.INFO)
         self.simu_para = {
                 "profiling":True,
                 "debug":True,
@@ -64,8 +64,8 @@ class Signal(object):
         self._value_state = 'idle'
 
     #def l(self, driver: typing.Union[Signal, Output]):
-    def l(self, driver):
-        """as a load of one port or signal."""
+    def set_driver(self, driver):
+        """set a driver, that is set this signal as a load of one port or signal."""
         if not isinstance(driver, Signal) and not isinstance(driver, Output):
             raise TypeError(nfe.wrong_driver_type)
         self._driver = driver
@@ -84,7 +84,7 @@ class Signal(object):
             self._set_value(self._driver)
 
     @property
-    def v(self):
+    def v(self): # to be removed
         """get the value or signal"""
         if self._value_state == 'force':
             return self._vaule
@@ -93,7 +93,7 @@ class Signal(object):
         return self._value
 
     @v.setter
-    def v(self, value):
+    def v(self, value): # to be removed
         """set a value"""
         if isinstance(self._value, Signal):
             raise TypeError(nfe.forbid_set_load)
@@ -102,12 +102,20 @@ class Signal(object):
     def _set_value(self, value):
         """actual store a value to _value."""
         self._value = value
+    def __set__(self, value):
+        if isinstance(self._value, Signal):
+            raise TypeError(nfe.forbid_set_load)
+        else:
+            self._set_value(value)
+    def __get__(self):
+        if self._value_state != 'force' and isinstance(self._driver, Signal):
+            self._value = self._driver
+        return self._value
 
 class Port(Signal):
     """docstring for Port"""
-    def __init__(self, arg=None):
-        super(Port, self).__init__()
-        self.arg = arg
+    def __init__(self, d=None):
+        super(Port, self).__init__(d)
         return
 
 class Input(Port):
@@ -124,5 +132,39 @@ class Output(Port):
         self.dtype = dtype
         return
 
+
+class TestBench:
+    """Top"""
+    # use generate methord and pytest to collect test info?
+    # can pytest run many testcase with once initialize the object?
+    # becase the dut may be very large.
+    def __init__(self, seq, scoreboard, dut):
+        super(TestBench, self).__init__()
+        self.seq = seq
+        self.scb = scoreboard
+        self.dut = dut
+    def run(self):
+        """start test."""
+        for i_case, case in enumerate(self.seq):
+            lg.info(f"start case {case[0]}")
+            for i_seq, seq in enumerate(case[1]):
+                lg.info(f"start sequence {seq[0]}")
+                self._estimate(seq)
+                lg.info(f"verify sequence {seq[0]}")
+                self._verify(i_case, i_seq)
+    def _estimate(self, v):
+        """estimate one."""
+        for data in v:
+            eval(f"{data[0]}={data[1]}")
+    def _verify(self, i_case, i_seq):
+        """check once result."""
+        try:
+            for data in self.scb[i_case][i_seq]:
+                eval(f"assert {data[0]}=={data[1]}")
+        except AssertionError as ea:
+            ecase = self.scb[i_case]
+            eseq = ecase[1][i_seq]
+            lg.error(f"in case {ecase[0]} and sequence {eseq[0]}, port {data[0]}: {ea}")
+ 
 if __name__ == "__main__":
     print("func_model.py")
