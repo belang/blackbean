@@ -16,6 +16,7 @@ import view as xv
 #import graph as xg
 import action as xa
 import circuit as xc
+import project
 
 #sys.path.append(join(os.environ["HOME"], "work", "nuanfeng", "nuanfeng"))
 #import nfmodel as nfm
@@ -29,18 +30,24 @@ lg.basicConfig(level=lg.DEBUG)
 
 root = tk.Tk()
 
+ac = xa.Action(root)
 cc = xc.Circuit()
-ac = xa.Action()
-vw = xv.View(root)
+vw = xv.View(root, ac)
+pr = project.Project(ac)
 #lc = nfm.Circuit()
 lc = None
 
 #cc.link(cc, lc, ac, vw)
 #lc.link(cc, lc, ac, vw)
-ac.link(cc, lc, vw)
-vw.link(ac)
+ac.link(pr, vw, cc, lc)
+vw.link()
 
-w = 1800
+#ac.active_project()
+#ac.new_circuit()
+#pr.new_project()
+ac.create_module()
+
+w = 1400
 h = 800
 #w = root.winfo_screenwidth() - 20
 #h = root.winfo_screenheight() - 100
