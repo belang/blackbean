@@ -404,7 +404,7 @@ class GRegfile(Graph):
        |                             |
        +-----------------------------+
 
-        """
+    """
     def __init__(self, coord, canvas, logic):
         super(GRegfile, self).__init__(coord, canvas, logic)
         self.config.config(show_name=True)
@@ -435,16 +435,6 @@ class GRegfile(Graph):
         for j in range(wch_count):
             self.wport_list.append(GPortW((5+(rch_count+j)*(11), -6), self.canvas))
         self.shape[2] = self.shape[2] + 10*(rch_count+wch_count)
-    @property
-    def all_items(self):
-        ta = []
-        for item_l in self.item_block:
-            ta.extend(item_l)
-        # for item_l in self.rport_list:
-            # ta.extend(item_l.all_items)
-        # for item_l in self.wport_list:
-            # ta.extend(item_l.all_items)
-        return ta
     def draw(self):
         """在画布上绘图。"""
         self.draw_main_frame()
@@ -478,6 +468,133 @@ class GRegfile(Graph):
         """docstring for update"""
         self.compute_shape()
         self.redraw()
+
+class GPipeReg(Graph):
+    """The layout of Regfile is::
+
+               +-----------------------------+
+           I0--|     name                    |
+               +-----------------------------+ 
+               |                             |
+           I1>-|    (Pipe)                   |->Out
+               |    bunlde                   |
+               +-----------------------------+
+
+    I0 is the default input from upper pipeline stage;
+    I1 is the input from logic module(usually the implementation of the pipe stage)
+    """
+    def __init__(self, coord, canvas, logic):
+        super(GRegfile, self).__init__(coord, canvas, logic)
+        self.config.config(show_name=True)
+        self.name = logic.name
+        self._shape = [0, 0, 80, 80]
+        self._pipe_text = "(Pipe)"
+        self.tags = (f"type=pipereg")
+        self.sub_items = []
+        self.bundle_items = []
+        self.pin_items = []
+        self.item_block.append(self.sub_items)
+        self.item_block.append(self.bundle_items)
+        self.item_block.append(self.pin_items)
+        self.pin_list = []
+    def compute_shape(self):
+        self.shape = self._shape
+        self._name_coord = [5, 2]
+        self._seperate_line = [0, 20, self.shape[2], 20]
+        self._pipe_text_coord = [5, self._seperate_line[1]+10]
+        self._bundle_coord = [10, self._seperate_line[1]+10]] # future compute by the size of text
+    def draw(self):
+        """在画布上绘图。"""
+        self.draw_main_frame()
+        self.draw_sub_frame()
+        self.draw_name()
+        self.draw_bundle_text()
+        self.draw_pin()
+    def draw_main_frame(self):
+        """docstring for draw_main_frame"""
+        item = self.canvas.create_rectangle(self.shape, tags=self.tags, disabledoutline='blue')
+        self.main_frame_items.append(item)
+        self.move_items(self.main_frame_items)
+    def draw_sub_frame(self):
+        item = self.canvas.create_line(self._seperate_line, tags=self.tags)
+        self.sub_items.append(item)
+        self.move_items(self.sub_items)
+    def draw_bundle_text(self):
+        item = self.canvas.create_text(self._pipe_text_coord, text=self._pipe_text, tags=self.tags, anchor='nw')
+        self.bundle_items.append(item)
+        item = self.canvas.create_text(self._bundle_coord, text=self.logic.bundle, tags=self.tags, anchor='nw')
+        self.move_items(self.bundle_items)
+    def draw_pin(self):
+        """draw regfile connection pins according circuit logic, such as one port, 1w1r, or 1w2r."""
+        for port in self.rport_list:
+            port.draw()
+        self.pin_items.extend(port.main_frame_items)
+        for port in self.wport_list:
+            port.draw()
+        self.pin_items.extend(port.main_frame_items)
+        self.move_items(self.pin_items)
+    def update(self):
+        """docstring for update"""
+        self.compute_shape()
+        self.redraw()
+
+class GDevice(object):
+    """docstring for GDevice
+        * first item in all items is main frame item"""
+    def __init__(self, coord, canvas, logic):
+        super(GDevice, self).__init__()
+        self.coord = coord
+        self.canvas = canvas
+        self.lc = logic
+        self.main_frame = []
+        self.all_items = []
+        self.config = GConfig()
+        self._fp_items = [] #[id1, id2...]
+        self._fp_coords = [] #[(x1,y1), (x2,y2)...]
+    def draw(self):
+        self.draw_main_frame()
+        pass
+    def draw_main_frame(self):
+        pass
+
+class GPort(GDevice):
+    """端口。
+    * shape 是图形主要外形。
+    """
+    def __init__(self, coord, canvas):
+        super(GPort, self).__init__(coord, canvas)
+    @property
+    def cp(self):
+        return self.main_frame
+    def draw_main_frame(self):
+        """在画布上绘图。"""
+        item = self.canvas.create_polygon(self.main_frame, fill='black', tags=self.tags, disabledoutline='blue')
+        self.canvas.move(item, self.coord[0], self.coord[1])
+        self.all_items.append(item)
+
+class GInst(GDevice):
+    """instance:
+        * first item in all items is main frame item"""
+    def __init__(self, coord, canvas, logic):
+        super(GDevice, self).__init__(coord, canvas, logic)
+        self.pin = []
+        self.main_frame = [0,0, 50,50]
+        self.sub_shape = []
+        self.text = logic.name
+        self._name_coord = (5, 2)
+    def draw(self):
+        self.draw_main_frame()
+        self.draw_pin()
+        self.draw_sub_shape()
+        self.draw_text()
+    def draw_main_frame(self):
+        pass
+    def draw_pin(self):
+        pass
+    def draw_sub_shape(self):
+        pass
+    def draw_text(self):
+        pass
 
 if __name__ == "__main__":
     print("graph.py")

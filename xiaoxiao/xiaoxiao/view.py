@@ -236,6 +236,330 @@ class DrawWin(XWin):
         ca = Canvas(self, bg='white', width=400, height=400)
         ca.pack(fill=BOTH, expand=1)
         return ca
+        # """创建新的画布"""
+        # if self.cur_canvas:
+            # self.cur_canvas.pack_forget()
+        # self.cur_canvas = Canvas(self, bg='white', width=400, height=400)
+        # self.cur_canvas.pack(fill=BOTH, expand=1)
+        # self.bind_mouse_default_action()
+    # ## mouse action
+    # def bind_mouse_default_action(self):
+        # """bind"""
+        # lg.debug("bind mouse action")
+        # self.cur_state = 'idle'
+        # #self.bind("<ButtonPress-1>", self._bind_select) # this does not work
+        # self.cur_canvas.bind("<ButtonPress-1>", self._bind_select)
+        # #self.cur_canvas.bind("<ButtonRelease-1>", self._button_release)
+        # #self.cur_canvas.bind("<ButtonRelease-3>", self._cancle)
+        # #self.cur_canvas.bind("<B1-Motion>", self._button_motion)
+        # self.cur_canvas.bind("<ButtonPress-3>", self._null)
+        # self.cur_canvas.bind("<Motion>", self._null)
+        # self.bind_top_key_default()
+    # def _bind_select(self, event):
+        # '''select module, device, or point or segment of a wire.
+        # '''
+        # #self._drag_data["item"] = self.cur_canvas.find_closest(event.x, event.y)[0]
+        # #self._drag_data["item"] = self.cur_canvas.find_enclosed(event.x-1, event.y-1, event.x+1, event.y+1)[0]
+        # ids = self.cur_canvas.find_overlapping(event.x-5, event.y-5, event.x+5, event.y+5)
+        # #if isinstance(self.cur_graph, xg.GWire):
+        # if isinstance(self.cc.cur_device, xc.LWire):
+            # for one in ids:
+                # tags = self.cur_canvas.gettags(one)
+                # if tx.TagFlagPoint in tags:
+                    # if self.cur_graph.select_point(one):
+                        # # selece flag point of the wire again
+                        # return
+        # for one in ids:
+            # if tx.TagFlagPoint in self.cur_canvas.gettags(one):
+                # # flag point is not in the all_items of a device.
+                # continue
+            # #self.event_x = event.x
+            # #self.event_y = event.y
+            # self.ac.deactive_device()
+            # self.ac.active_device(ids[0])
+            # break
+        # else:
+            # self.ac.active_module_by_name()
+    # def bind_new_input(self):
+        # """设置鼠标行为，选择器件起始点。"""
+        # self._escape(None)
+        # self.cur_canvas.bind("<ButtonPress-1>", self.ac.create_input)
+    # def bind_new_output(self):
+        # """设置鼠标行为，选择器件起始点。"""
+        # self._escape(None)
+        # self.cur_canvas.bind("<ButtonPress-1>", self.ac.create_output)
+    # def bind_new_inst(self):
+        # """设置鼠标行为，选择器件起始点。"""
+        # self._escape(None)
+        # self.cur_canvas.bind("<ButtonPress-1>", self.ac.create_inst)
+    # def bind_new_regb(self):
+        # """create bundle of register."""
+        # self._escape()
+        # self.cur_canvas.bind("<ButtonPress-1>", self.ac.create_regb)
+    # def bind_new_regfile(self):
+        # """create bundle of register."""
+        # self._escape()
+        # self.cur_canvas.bind("<ButtonPress-1>", self.ac.create_regfile)
+    # def bind_new_wire(self):
+        # """设置鼠标行为，选择起始连接点，设置新的鼠标行为。"""
+        # self._escape()
+        # self.cur_canvas.bind("<ButtonPress-1>", self._create_temp_wire)
+    # def bind_move_device(self, start_point):
+        # """移动器件"""
+        # self._escape(None)
+        # self.cur_state = "move_device"
+        # for cp_coord in self.ac.get_all_cp():
+            # self._get_dev_connected_wire(cp_coord)
+        # self.temp_coord.append(start_point)
+        # self.cur_graph.coord = start_point
+        # self.cur_canvas.bind("<Motion>", self._show_device_md)
+        # self.cur_canvas.bind("<ButtonPress-1>", self._get_end_point_md)
+    # def bind_move_wire(self):
+        # """移动线，只移动线的线段。"""
+        # self._escape(None)
+        # #self.cur_canvas.bind("<Motion>", self._indicate_moveable_segment)
+        # self.cur_canvas.bind("<ButtonPress-1>", self._get_start_point_mw)
+        # self.cur_state = "move_wire"
+    # def _cancle(self, event=None):
+        # """取消当前行为。"""
+        # self._escape(None)
+    # def _null(self, event):
+        # """no action"""
+        # pass
+
+    # ## action
+    # def _end_action(self):
+        # """succeed in finishing one action."""
+        # self.md_connected_wire.clear()
+        # self.temp_item.clear()
+        # self.temp_coord.clear()
+        # self.bind_mouse_default_action()
+    # def _escape(self, event=None):
+        # """cancel current action"""
+        # if self.cur_state == "move_device":
+            # dx = self.cur_graph.coord[0] - self.temp_coord[-1][0]
+            # dy = self.cur_graph.coord[1] - self.temp_coord[-1][1]
+            # for item in self.cur_items:
+                # self.cur_canvas.move(item, dx, dy)
+        # for item in self.temp_item:
+            # self.cur_canvas.delete(item)
+        # self.temp_coord.clear()
+        # self.cur_state = 'idle'
+        # self.bind_mouse_default_action()
+    # # wire related
+    # def _create_temp_wire(self, event):
+        # """找到线的起点:在鼠标附件查找cp；画临时的线。"""
+        # cp = self.find_cp(event.x, event.y)
+        # if cp is None:
+            # self._cancle()
+            # return
+        # #tbox = [cp[0], cp[1], cp[0]+4, cp[1], cp[0]+8, cp[1]]
+        # tbox = [cp[0], cp[1], cp[0]+4, cp[1]]
+        # tag_type = "type=wire"
+        # tags = (tag_type)
+        # tid = self.cur_canvas.create_line(tbox, tags=tags)
+        # self.temp_item.append(tid) # 画默认的线
+        # self.cur_canvas.bind("<ButtonPress-3>", self._get_next_point_wire)
+        # self.cur_canvas.bind("<ButtonPress-1>", self._get_end_point_wire)
+        # self.cur_canvas.bind("<Motion>", self._show_line_wire)
+    # def _get_next_point_wire(self, event):
+        # """get next cp = the second point of the temp wire """
+        # item = self.temp_item[-1]
+        # tbox = self.cur_canvas.coords(item)
+        # new_coord = tbox + [tbox[-2]+4, tbox[-1]]
+        # self.cur_canvas.coords(item, new_coord)
+        # if self.check_line_cross_device():
+            # self._cancle()
+    # def _get_end_point_wire(self, event):
+        # """找到终点，开始生成线。重置鼠标行为。"""
+        # # 根据cp点调整最后一个segment的位置.
+        # # 需要判断当前线上是否只有一个segment。
+        # cp = self.find_cp(event.x, event.y)
+        # if cp is None:
+            # self._cancle()
+            # return
+        # item = self.temp_item[-1]
+        # tbox = self.cur_canvas.coords(item)
+        # start_x = tbox[-4]
+        # start_y = tbox[-3]
+        # dx = cp[0] - start_x
+        # dy = cp[1] - start_y
+        # if len(tbox) > 4:
+            # # more than one point
+            # fix_point = tbox[:-4]
+            # #new_point = tbox[-4:-2]
+            # new_point = [cp[0], cp[1]]
+            # if tbox[-6] == tbox[-4]:
+                # # same x: vertical
+                # start_point = [start_x, cp[1]]
+            # else:
+                # start_point = [cp[0], start_y]
+            # new_coord = fix_point + start_point + new_point
+        # else:
+            # fix_point = tbox[:-2]
+            # if cp[0] == start_x:
+                # mid_p = [cp[0], (cp[1]+start_y)//2]
+            # else:
+                # mid_p = [(cp[0]+start_x)//2, cp[1]]
+            # new_coord = fix_point + mid_p + mid_p + cp
+        # self.cur_canvas.coords(item, new_coord)
+        # self._end_action()
+        # self.ac.create_wire(new_coord, item)
+    # def _show_line_wire(self, event):
+        # """draw temp wire line from last point."""
+        # item = self.temp_item[-1]
+        # tbox = self.cur_canvas.coords(item)
+        # start_x = tbox[-4]
+        # start_y = tbox[-3]
+        # dx = event.x - start_x
+        # dy = event.y - start_y
+        # if len(tbox) > 4:
+            # # more than two point
+            # fix_point = tbox[:-4]
+            # #new_point = tbox[-4:-2]
+            # new_point = [event.x, event.y]
+            # if tbox[-6] == tbox[-4]:
+                # # same x: vertical
+                # start_point = [start_x, event.y]
+            # else:
+                # start_point = [event.x, start_y]
+            # new_coord = fix_point + start_point + new_point
+        # else:
+            # fix_point = tbox[:-2]
+            # if abs(dx) > abs(dy):
+                # new_point = [event.x, start_y]
+            # else:
+                # new_point = [start_x, event.y]
+            # new_coord = fix_point + new_point
+        # self.cur_canvas.coords(item, new_coord)
+    # def find_cp(self, x, y):
+        # """search for a cp near the cursor, return coord."""
+        # ids = self.cur_canvas.find_overlapping(x-3, y-3, x+3, y+3)
+        # if ids:
+            # for one_id in ids:
+                # tags = self.cur_canvas.gettags(one_id)
+                # for one_tag in tags:
+                    # if one_tag.startswith("cp"):
+                        # dev_coord = self.cur_canvas.coords(one_id)
+                        # cp_coord = dev_coord[0:2]
+                        # # cp_index = one_tag.split("=")[1]
+                        # # dev_coord = self.cur_canvas.coords(one_id)
+                        # # cp_coord = dev_coord[int(cp_index):int(cp_index)+2]
+                        # return cp_coord
+        # lg.debug("do not find cp in %s,%s", x,y)
+        # return None
+    # def check_line_cross_device(self):
+        # """return True if line cross divecs."""
+        # return False
+    # # move action
+    # def _show_device_md(self, event):
+        # """show device when move the mouse."""
+        # dx = event.x-self.temp_coord[-1][0]
+        # dy = event.y-self.temp_coord[-1][1]
+        # self.temp_coord[0] = [event.x, event.y]
+        # for item in self.cur_items:
+            # self.cur_canvas.move(item, dx, dy)
+    # def _get_end_point_md(self, event):
+        # """get the end point and move all connected wires."""
+        # # 方案：重新布线从线的与移动点相连的第二个和第三个点之间的线段。
+        # # 不支持增加新的线段，只能调整当前线段与被移动器件相连的两段区间。
+        # delta_x = event.x - self.cur_graph.coord[0]
+        # delta_y = event.y - self.cur_graph.coord[1]
+        # for one_wire in self.md_connected_wire:
+            # wid = one_wire[0]
+            # moved_point = one_wire[1]
+            # org_coord = self.cur_canvas.coords(wid)
+            # new_coord = move_connected_wire(wid, moved_point, org_coord, delta_x, delta_y)
+            # self.cur_canvas.coords(wid, new_coord)
+        # self.cur_graph.coord = (event.x, event.y)
+        # self.ac.active_device()
+        # self._end_action()
+    # def _get_dev_connected_wire(self, cp_coord):
+        # """获取所有与器件相连的线。"""
+        # # 获取所有的线，检查线的哪个端点在bbox中。
+        # # 使用cp+/-1来查找线。
+        # bbox = [cp_coord[0]-1, cp_coord[1]-1, cp_coord[0]+1, cp_coord[1]+1,]
+        # for one_id in self.cur_canvas.find_overlapping(bbox[0], bbox[1], bbox[2], bbox[3]):
+            # tags = self.cur_canvas.gettags(one_id)
+            # if 'type=wire' in tags:
+                # #wire_coord = self.cur_canvas.coords(one_id)
+                # self.md_connected_wire.append([one_id, cp_coord]) # wire id and connect point
+    # def _get_start_point_mw(self, e):
+        # """获取要移动的线段。"""
+        # raise NotImplementedError("移动线")
+        # to_move_seg = xa.get_to_move_seg((e.x, e.y), self.cur_canvas.coord(self.cur_items[0]))
+        # self.cur_canvas.bind("<Motion>", self._show_wire_mw)
+
+    # def close(self):
+        # """关闭"""
+        # self.cur_canvas = None
+        # self.cur_state = 'idle'
+        # self.temp_coord = []
+        # self.temp_item = []
+        # self.md_connected_wire = []
+
+    # def active_canvas(self, canvas):
+        # """激活指定画布，清空当前器件。"""
+        # if self.cur_canvas:
+            # self.cur_canvas.pack_forget()
+        # self.cur_canvas = canvas
+        # self.cur_canvas.pack(fill=BOTH, expand=True)
+    # def hide_item_by_id(self, did):
+        # """hide item ty id"""
+        # for item in self.cur_canvas.find_withtag(xg.tag_did(did)):
+            # self.cur_canvas.itemconfig(item, state=tk.HIDDEN)
+    # def unpack_canvas(self, canvas):
+        # """隐藏canvas，清空当前器件。"""
+        # try:
+            # canvas.pack_forget()
+        # except:
+            # pass
+    # def deactive_module(self):
+        # """关闭所有canvas。"""
+        # tc = self.cur_canvas
+        # self.cur_canvas = None
+        # tc.pack_forget()
+
+    # ######################### nnnnnnnnnnnnnnnnnnn
+
+    # def update_attr(self, graph):
+        # """根据对象属性修改对象图形。"""
+        # self.cur_canvas.coords(self.cur_graph, graph['coord'])
+        # if graph['options'] != {}:
+            # self.cur_canvas.itemconfig(self.cur_graph, graph['options'])
+
+    # def update_coord(self, did, delta_x, delta_y):
+        # """update the coord of the circuit and position"""
+        # items = self.cur_canvas.find_withtag(did)
+        # for item in items:
+            # self.cur_canvas.move(item, delta_x, delta_y)
+
+    # ## draw device function
+    # def draw_instance(self, coord, inst_view):
+        # """创建模块实例。
+        # size: (length, width)"""
+        # tag_type = f"type=instance mbox"
+        # #tag_shape = "shape=rectangle"
+        # #tags = (tag_id, tag_type, tag_shape)
+        # tags = (tag_type)
+        # items = []
+        # items.append(self.cur_canvas.create_rectangle(inst_view.mbox, tags=tags))
+        # for pin in inst_view.pin_left:
+            # tpin = self.cur_canvas.create_polygon(pin.shape, tags=pin.tags)
+            # self.cur_canvas.move(tpin, pin.coord[0], pin.coord[1])
+            # items.append(tpin)
+        # for pin in inst_view.pin_right:
+            # tpin = self.cur_canvas.create_polygon(pin.shape, tags=pin.tags)
+            # self.cur_canvas.move(tpin, pin.coord[0], pin.coord[1])
+            # items.append(tpin)
+        # for one in items:
+            # self.cur_canvas.move(one, coord[0], coord[1])
+        # return items
+    # def _create_line(self, did, coord):
+        # """创建器件pin的连接线"""
+        # tags = (f"did={did}", 'type=cpline', "shape=line")
+        # self.cur_canvas.create_line(coord, tags=tags)
+
 
 class AttrWin(XWin):
     """属性区"""

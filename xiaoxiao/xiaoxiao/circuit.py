@@ -412,11 +412,78 @@ class Component(Device):
     def __init__(self, module, name, coord):
         super(PipeReg, self).__init__(module, name)
         self.arg = arg
-        self.parameters = 
+        self.parameters = ['name']
+    def update_config(self, kwgs):
+        "element, row, column, rch_count, wch_count"
+        for key, value in kwgs.items():
+            if key in self.parameters:
+                setattr(self, key, value)
 
-        
+class PipeReg(Component):
+    """pipeline register."""
+    def __init__(self, module, name, coord, bundle=''):
+        super(PipeReg, self).__init__(module, name)
+        self.bundle = ''
+        self.parameters.append('bundle')
+        self.graph = xg.GPipeReg(coord, module.canvas, self)
+
 # bus: in a lib file, with A pin and B pin for module pins.
 #dev_none = Device(None, tx.NameNone)
+
+class Design(object):
+    """docstring for Logic"""
+    def __init__(self, arg):
+        super(Logic, self).__init__()
+        self.arg = arg
+        self.module_list = []
+
+class Module(object):
+    """docstring for Module"""
+    def __init__(self, arg):
+        super(Module, self).__init__()
+        self.arg = arg
+        self.device_list = []
+
+class Device(object):
+    """docstring for Device"""
+    def __init__(self, module, name):
+        super(Device, self).__init__()
+        self._name = "device"
+        self.module = module
+        self.name = name
+        self.graph = None
+        pass
+    @property
+    def name(self):
+        return self._name
+    @name.setter
+    def name(self, name):
+        check_attr_name(name)
+        # TODO: check if it has the same name with other device in the same module
+        self._name = name
+
+class Port(Device):
+    """docstring for Port"""
+    def __init__(self, module, name='p_'):
+        super(Port, self).__init__(module, name)
+        self.module, name= = module, name=
+        pass
+
+class Wire(Device):
+    """docstring for Wire"""
+    def __init__(self, module, name='w_'):
+        super(Wire, self).__init__(module, name)
+        pass
+
+class Instance(Device):
+    """docstring for Instance"""
+    def __init__(self, module, name='I_'):
+        super(Instance, self).__init__(module, name)
+        self.ref_name = ''
+        self.
+        pass
+
+
 
 if __name__ == "__main__":
     print("circuit.py")
