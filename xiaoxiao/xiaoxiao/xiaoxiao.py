@@ -12,51 +12,31 @@ import sys
 import logging as lg
 import tkinter as tk
 
-import view as xv
-#import graph as xg
-import action as xa
-import circuit as xc
+import view
 import project
+import action
 
 #sys.path.append(join(os.environ["HOME"], "work", "nuanfeng", "nuanfeng"))
 #import nfmodel as nfm
 # TODO: remove sys after nuanfeng is setuped to system.
 #from nuanfeng import nfcircuit as nfc
+#lc = nfm.Circuit()
+#lc = None
 
 lg.basicConfig(level=lg.DEBUG)
 
 # SOURCE_DIR = os.path.dirname(os.path.realpath(__file__))
 # CONFIG_FILE = join(SOURCE_DIR, 'config.ini')
 
-root = tk.Tk()
-
-ac = xa.Action(root)
-cc = xc.Circuit()
-vw = xv.View(root, ac)
-pr = project.Project(ac)
-#lc = nfm.Circuit()
-lc = None
-
-#cc.link(cc, lc, ac, vw)
-#lc.link(cc, lc, ac, vw)
-ac.link(pr, vw, cc, lc)
-vw.link()
-
-#ac.active_project()
-#ac.new_circuit()
-#pr.new_project()
-ac.create_module()
-
-w = 1400
-h = 800
-#w = root.winfo_screenwidth() - 20
-#h = root.winfo_screenheight() - 100
-##print(w, h)
-x = 0
-y = 0
-root.geometry("%dx%d+%d+%d" %(w,h,x,y))
-#root.attributes("-topmost",True)
-root.mainloop()
+pj = project.Project()
+ac = action.ACRecord()
+vw = view.View(pj, ac)
+vw.init_gui()
+vw.mw.tw.active_project()
+vw.new_project()
+vw.mw.tw.create_module()
+vw.start_gui()
+#ac.init_view(view.View)
 
 
 if __name__ == "__main__":
