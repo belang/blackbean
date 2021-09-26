@@ -101,9 +101,8 @@ class ToolWin(XWin):
         #Button(self, text=twt.move    , height=bt_h, width=bt_w,             command=self.view.move_device       ).grid(row=2, column=1)
     def create_module(self):
         """create module"""
-        #self.view.deactive_module()
-        self.view.new_module()
-        self.view.active_module()
+        md = self.view.new_module()
+        self.view.active_module(md)
     def active_project(self):
         """docstring for active_project"""
         self.view.deactive_device()

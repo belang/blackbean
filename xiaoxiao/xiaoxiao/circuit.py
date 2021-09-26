@@ -49,7 +49,6 @@ class Circuit():
         self.c = c
         self.module_list = []
         self._mid = 0
-        self._did = 0
         self.cur_device = None
         self.cur_module = None
         #self._top_module = None # None means use default module. don't link it to a module object, or else when use remove the module, it will refer to a false one.
@@ -62,14 +61,11 @@ class Circuit():
         """increase module identifer and return new id."""
         self._mid += 1
         return self._mid
-    def did(self):
-        """increase module identifer and return new id."""
-        self._did += 1
-        return self._did
     def new_module(self, name, canvas):
         """new module"""
-        self.cur_module = UModule(self.mid(), name, canvas)
-        self.module_list.append(self.cur_module)
+        md = UModule(self.mid(), name, canvas)
+        self.module_list.append(md)
+        return md
     def new_template(self, name, canvas):
         """new module"""
         module = template.Template(self.mid(), name, canvas)
@@ -80,35 +76,40 @@ class Circuit():
         module = UModule(name, canvas)
         self.module_list.append(module)
         return module
-    def new_input(self, name, width, coord):
-        """以默认名称创建输入端口"""
-        self.cur_device = PortIn(self.c, self.did(), name, width, coord, self.cur_module.canvas)
-        self.cur_module.port_list.append(self.cur_device)
-        self.cur_device.draw()
     def get_module_by_index(self, index):
         return self.module_list[index]
 
 class Module(object):
     """docstring for Module"""
-    def __init__(self, mid, canvas):
-        self.mid = mid
+    def __init__(self, canvas):
+        self._did = 0
         self.canvas = canvas
         self.symbol = None
+    def did(self):
+        """increase module identifer and return new id."""
+        self._did += 1
+        return self._did
     def active(self):
         self.canvas.pack(fill='both', expand=True)
     def deactive(self):
         self.canvas.pack_forget()
-    def new_inst(self, name, coord, ref_module):
+    def new_input(self, c, name, width, coord):
+        """以默认名称创建输入端口"""
+        dev = PortIn(c, self.did(), name, width, coord, self.canvas)
+        self.port_list.append(dev)
+        dev.draw()
+        return dev
+    def new_inst(self, c, name, coord, ref_module):
         """new instance."""
-        dev = Instance(did, name, coord, ref_module)
+        dev = Instance(c, self.did, name, coord, ref_module)
         self.devices.append(dev)
         dev.graph.draw()
         return dev
-        
+
 class UModule(Module, logic.LModule):
     """docstring for UModule"""
     def __init__(self, mid, name, canvas):
-        Module.__init__(self, mid, canvas)
+        Module.__init__(self, canvas)
         logic.LModule.__init__(self, name)
         # super(UModule, self).__init__(mid, canvas)
         # self.logic = logic.LModule(name)
@@ -124,11 +125,19 @@ class UModule(Module, logic.LModule):
             for port in self.logic.port_list:
                 self.pin['t'].append(port.id)
         
-class PortIn(logic.LPortIn, symbol.VPortIn):
+class Device(object):
+    """docstring for Device"""
+    def __init__(self, c, did):
+        super(Device, self).__init__()
+        self.c = c
+        self.did = did
+
+class PortIn(Devicelogic.LPortIn, symbol.VPortIn):
     """docstring for PortIn"""
     def __init__(self, c, did, name, width, coord, canvas):
-        logic.LPortIn.__init__(self, did, name, width)
-        symbol.VPortIn.__init__(self, c, did, coord, canvas)
+        super(PortIn, self).__init__(c, did)
+        self.logic = logic.LPortIn(name, width)
+        self.symbol= symbol.VPortIn(c, coord, canvas)
 
 class Wire():
     """docstring for Wire"""
@@ -138,11 +147,18 @@ class Wire():
 
 class Instance():
     """docstring for Instance"""
-    def __init__(self, did, name='U_', coord=(0,0), ref_module=None):
-        super(Instance, self).__init__(did, name, coord, ref_module)
+    def __init__(self, c, did, name='U_', coord=(0,0), rm_id=0, ref_module=None):
+        super(Instance, self).__init__(c, did)
         #self.p = logic.Parameters()
         #self.c = symbol.VConfig()
-        self.symbol = VInst(did, self.ref_module.symbol)
+        self.rm_id = rm_id
+        self.logic = logic.LInstance(name, coord, ref_module)
+        self.symbol = VInst(c, did)
+    def updata_ref_module(self):
+        md = c.find_module_by_id(self.rm_id)
+        if not md:
+            raise ValueError("module not found")
+        self.ref_module = md
     def update_config(self, kwgs):
         "element, row, column, rch_count, wch_count"
         for key, value in kwgs.items():

@@ -144,6 +144,7 @@ class View(object):
         self.close()
         self.mw.aw.close()
         #self.project.circuit.close()
+    # symbol active
     def active_project(self):
         """docstring for active_project"""
         self.deactive_device()
@@ -161,21 +162,23 @@ class View(object):
         self.active_module(self.project.circuit.module_list[index])
     def active_module(self, md=None):
         """激活模块。当前模块或列表窗口选中的模块。"""
+        self.deactive_device()
         if md is not None:
-            if self.project.circuit.cur_module:
-                self.project.circuit.cur_module.deactive()
-            self.deactive_device()
+            if md == self.project.circuit.cur_module:
+                return
+            self.deactive_module()
             self.project.circuit.cur_module = md
         self.project.circuit.cur_module.active()
         self.mw.aw.active_module(self.project.circuit.cur_module)
         self.mw.lw.active_module_by_index(self.project.circuit.module_list.index(self.project.circuit.cur_module))
+        self.bind_mouse_default_action()
         lg.debug((tx.ac.activeModule+" %s"), self.project.circuit.cur_module.name)
     def deactive_module(self, index=None):
         """不激活任何模块。"""
         if self.project.circuit.cur_module:
             self.project.circuit.cur_module.deactive()
-        self.project.circuit.cur_module = None
-        self.mw.aw.deactive()
+            self.mw.aw.deactive()
+            self.deactive_device()
     def active_device_by_id(self, item_id=None):
         """激活器件。当前器件或当前canvas选中的器件。"""
         if item_id is not None:
@@ -196,14 +199,6 @@ class View(object):
             self.project.circuit.cur_device.active()
         self.mw.aw.active_device(self.project.circuit.cur_device)
         lg.debug("active device: %s", self.project.circuit.cur_device.name)
-    def active_module_by_name(self, name=''):
-        """根据模块名激活模块:属性、逻辑"""
-        if not name == '':
-            for mod in self.project.circuit.module_list:
-                if name == mod.name:
-                    self.project.circuit.cur_module = mod
-                    break
-        self.active_module()
     ###module related function
     def init_instance_view(self):
         """initial instance view"""
@@ -255,37 +250,42 @@ class View(object):
         self.temp_coord = []
         self.temp_item = []
         self.md_connected_wire = []
+    ## new function
     def new_module(self, name='module'):
-        self.project.circuit.new_module(name, tk.Canvas(self.mw.dw, bg='white', width=400, height=400))
-        self.mw.lw.new_module(self.project.circuit.cur_module.name) # index
-        #md = Module(md, tk.Canvas(self.mw.dw, bg='white', width=400, height=400))
-        #self.module_list.append(md)
-        self.bind_mouse_default_action()
+        md = self.project.circuit.new_module(name, tk.Canvas(self.mw.dw, bg='white', width=400, height=400))
+        self.mw.lw.new_module(md.name) # index
+        return md
     def create_inst(self, e):
         """以默认名称创建实例"""
         coord = (e.x, e.y)
         # get module name
         data = [] # get selected module attr frame
-        xv.DiaInstType(self.mw, data, self.project.circuit.module_list)
+        window.DiaInstType(self.mw, data, self.project.circuit.module_list)
         if data == []:
             return
         ref_module = data[0]
         name = f'u_{ref_module.name}'
-        self.deactive_device()
-        self.project.circuit.cur_device = self.project.circuit.cur_module.new_inst(name, coord, ref_module)
-        self.active_device()
-        self.record_act('new device', device=self.project.circuit.cur_device)
+        #self.deactive_device()
+        dev = self.project.circuit.cur_module.new_inst(self, name, coord, ref_module)
+        self.active_device(dev)
+        #self.record_act('new device', device=self.project.circuit.cur_device)
         lg.info(f"创建实例 {name}")
         self.end_action()
     def create_input(self, e):
         """以默认名称创建输入端口"""
         name='i_'
         coord = (e.x, e.y)
-        self.deactive_device()
-        self.project.circuit.new_input(name, '1', coord)
-        self.active_device()
+        #self.deactive_device()
+        dev = self.project.circuit.cur_module.new_input(self, name, '1', coord)
+        self.active_device(dev)
         lg.info(f"{tx.InfoCreateInput}: {name}")
         self.end_action()
+    ## assist function
+    def find_module_by_id(self, mid):
+        for md in self.circuit.module_list:
+            if md.mid == mid:
+                return md
+        return None
     ## mouse action
     def end_action(self):
         """end the action."""

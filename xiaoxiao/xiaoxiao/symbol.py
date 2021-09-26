@@ -33,7 +33,9 @@ class SymbolC(object):
 
 class VDevice(object):
     """docstring for VDevice
-        * first item in all items is main frame item"""
+        * first item in all items is main frame item
+        * c: controler, hear is view
+        """
     _fp_shape = (-3,-3, 3,3)
     def __init__(self, c, did, coord, canvas):
         super(VDevice, self).__init__()
@@ -285,11 +287,9 @@ class SModule():
 class VInst(VDevice):
     """instance:
         * first item in all items is main frame item"""
-    def __init__(self, c, did, coord, canvas, ref_symbol):
+    def __init__(self, c, did, coord, canvas):
         super(VDevice, self).__init__(c, did, coord, canvas)
-        self.symbol = ref_symbol
         self.tags.append('inst')
-        self.main_frame = self.symbol.main_frame
         self._config = {}
         self.place_pin()
     def place_pin(self, config_file=None):
@@ -313,7 +313,7 @@ class VInst(VDevice):
         for item in self.all_items:
             self._move(item)
     def draw_main_frame(self):
-        item = self.canvas.create_rectangle(self.symbol.main_frame.shape, tags=self.tags, disabledoutline='blue')
+        item = self.canvas.create_rectangle(self.ref_module.symbol.main_frame.shape, tags=self.tags, disabledoutline='blue')
         self.all_items.append(item)
     def draw_pin(self):
         coord = (0,0)

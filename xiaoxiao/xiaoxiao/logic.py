@@ -75,10 +75,8 @@ class LModule(object):
 
 class LDevice(object):
     """docstring for Module"""
-    def __init__(self, did, dname='device'):
-        self.did = did
+    def __init__(self, dname='device'):
         self.name = dname
-        self.view = None
     @property
     def name(self):
         return self._name
@@ -90,11 +88,10 @@ class LDevice(object):
 
 class LInstance(LDevice):
     """docstring for Instance"""
-    def __init__(self, module, name='U_', ref_module=None):
-        super(Instance, self).__init__(module, name)
+    def __init__(self, name, ref_module=None):
+        super(Instance, self).__init__(name)
         self.parameters = {}
         self.ref_module = ref_module
-        self.ref_design = self.ref_module.name
     def update_config(self, kwgs):
         "element, row, column, rch_count, wch_count"
         for key, value in kwgs.items():
@@ -103,8 +100,8 @@ class LInstance(LDevice):
 
 class LPort(LDevice):
     """Logic interface of a module"""
-    def __init__(self, did, name, width):
-        super(LPort, self).__init__(did, name)
+    def __init__(self, name, width):
+        super(LPort, self).__init__(name)
         self.width = width
         # if isinstance(signal, Signal):
             # self.signal = signal
