@@ -16,21 +16,6 @@ import logging as lg
 import text as xt
 tx = xt.init_text()
 
-class VConfig:
-    """graph config options."""
-    def __init__(self):
-        self.show_name = False # show name in graph
-    def config(self, **config):
-        for key, value in config.items():
-            setattr(self, key, value)
-
-class SymbolC(object):
-    """docstring for Symbol"""
-    def __init__(self, color='black'):
-        super(SymbolC, self).__init__()
-        self.color = 'black'
-        self.shape = None
-
 class VDevice(object):
     """docstring for VDevice
         * first item in all items is main frame item
@@ -43,7 +28,6 @@ class VDevice(object):
         self.c = c
         self.coord = coord
         self.canvas = canvas
-        self.main_frame = SymbolC(color='black')
         self.all_items = []
         self._fp_items = [] #[id1, id2...]
         #self._fp_coords = [] #[(x1,y1), (x2,y2)...]
@@ -86,35 +70,14 @@ class VPort(VDevice):
         self.tags.append('cp')
     def vpin(self, side, coord):
         pass
-    #return self.pin_view(self.name, side, coord)
-    def draw_main_frame(self):
-        item = self.canvas.create_polygon(self.main_frame.shape, fill=self.main_frame.color, tags=self.tags, disabledoutline='blue')
-        #self.canvas.move(item, self.coord[0], self.coord[1])
-        self.canvas.tag_bind(item, sequence='<Enter>', func=self.mouse_in, add=None)
-        self.canvas.tag_bind(item, sequence='<Leave>', func=self.mouse_ou, add=None)
-        self.all_items.append(item)
-    def draw_fp(self):
-        """draw flag points."""
-        length = len(self.main_frame.shape)
-        i = 0
-        while i < length:
-            x = self.main_frame.shape[i]
-            i += 1
-            y = self.main_frame.shape[i]
-            i += 1
-            item = self.canvas.create_rectangle(self._fp_shape, fill='light blue', tags=tx.TagFlagPoint, state='disabled')
-            self._fp_items.append(item)
-            self.all_items.append(item)
-            self.canvas.move(item, x, y)
 
-class VPortIn(VPort):
+class VPortIn():
     """端口。
-    * shape 是图形主要外形。
+    * main_frame_shape 是图形主要外形。
     """
-    def __init__(self, c, did, coord, canvas):
-        super(VPortIn, self).__init__(c, did, coord, canvas)
-        self.main_frame.shape = [15,5, 10,10, 0,10, 0,0, 10,0]
-        self.tags.append('dev=input')
+    def __init__(self):
+        super(VPortIn, self).__init__()
+        self.main_frame = [15,5, 10,10, 0,10, 0,0, 10,0]
 
 class VWire(VDevice):
     """docstring for VWire"""
@@ -208,30 +171,29 @@ class SModule():
                      +----------+               \n
           \n
     """
+    _name_coord = (5, 2)
     def __init__(self):
-        self.pin = {'l':[], 'r':[], 't':[], 'd':[]}
-        self.main_frame = SymbolC(color='black')
-        self._size = (40, 40) # initial size: x_coord(h), y_coord(v)
+        self._size = (60, 40) # initial size: x_coord(h), y_coord(v)
         self._pin_space = (8, 8) # the increased length when adding one pin.
         self._pin_size = (6, 6)
         self.size = [0, 0]
-        self.pin_items = []
-        self.pins = [[],[],[],[]] # [l, r, t, d]
-        self.item_block.append(self.pin_items)
-        self.config.config(show_name=True)
-        self.init_pin_placement()
-    def init_pin_placement(self):
-        """generate pin shapes from port，
-        元素是每个边的引脚列表，依次为左、右、上、下
-        """
-        self.view.append([])
-        self.view.append([])
-        self.view.append([])
-        self.view.append([])
-        lpins = self.view[0]
-        rpins = self.view[1]
-        tpins = self.view[2]
-        dpins = self.view[3]
+        #self.pin_items = []
+        self.pins_location = [[],[],[],[]] # [l, r, t, b]
+        #self.item_block.append(self.pin_items)
+        self.main_frame = []
+        self.pin_symbols = []
+    def init_pin_placement(self, port_list):
+        """reset placement. defaltly place all pins on top."""
+        self.pins_location = [[],[],[],[]] # [l, r, t, b]
+        for port in port_list:
+            self.pins_location[2].append(port)
+        self._place_pin()
+    def _place_pin(self):
+        """generate pin shapes from port， """
+        lpins = self.pins_location[0]
+        rpins = self.pins_location[1]
+        tpins = self.pins_location[2]
+        bpins = self.pins_location[3]
         #重新计算实例大小。
         #初始化尺寸_size = 20 x 20;
         #左右两边最多的引脚数决定长度：20 + len * 8。
@@ -247,99 +209,70 @@ class SModule():
         # 引脚
         x = -1 * self._pin_size[0]
         y = 0
-        for pin in lpins:
-            self._add_pin(self.pins[0], pin, (x,y), 'l')
+        for port in lpins:
+            self.pin_symbols.append(port.gen_pin_symbol((x,y), 'l'))
             y += self._pin_space[1]
         x = self.size[0]
         y = 0
-        for pin in rpins:
-            self._add_pin(self.pins[1], pin, (x,y), 'r')
+        for port in rpins:
+            self.pin_symbols.append(port.gen_pin_symbol((x,y), 'r'))
             y += self._pin_space[1]
         x = 0
         y = -1 * self._pin_size[1]
-        for pin in tpins:
-            self._add_pin(self.pins[2], pin, (x,y), 't')
+        for port in tpins:
+            self.pin_symbols.append(port.gen_pin_symbol((x,y), 't'))
             x += self._pin_space[0]
         x = 0
         y = self.size[1]
-        for pin in tpins:
-            self._add_pin(self.pins[3], pin, (x,y), 'd')
+        for port in bpins:
+            self.pin_symbols.append(port.gen_pin_symbol((x,y), 'b'))
             x += self._pin_space[0]
+        self.main_frame = [0, 0, self.size[0], self.size[1]]
         #placed_pin_count = sum(len(x) for x in pin_location)
         #if placed_pin_count != pin_count:
             #lg.error(f"引脚数目不全，还缺少{pin_count - placed_pin_count}个引脚没有定义位置")
-    def set_inst_view(self, port_location=[]):
-        """ set a different view shape different from module default one. """
-        self.view = port_location
-    def _add_pin(self, plist, port, coord, side):
-        """向单元中增加一个引脚摆放。"""
-        plist.append(port.gen_pin(port.name, coord, self.canvas, side))
+    def set_inst_pins_location(self, port_location=[]):
+        """ set a different pins_location shape different from module default one. """
+        self.pins_location = port_location
 
-    @property
-    def mbox(self):
-        """main box"""
-        x0 = 0
-        x1 = 0
-        y0 = self.size[0]
-        y1 = self.size[1]
-        return (x0, x1, y0, y1)
+class SPin():
+    """实例端点.
+    coord 是pin相对实例原点的坐标。
+    标签中有名称，用于在查找线的连接关系时，指示pin的信息。"""
+    def __init__(self, coord, side):
+        super(SPin, self).__init__()
+        self.coord = coord
+        self.side = side
+        self.tags = ['pin']
+    def draw(self, tags, canvas):
+        """在画布上绘图。"""
+        item = canvas.create_polygon(self.pin_shape_all[self.side], fill='black', tags=self.tags+tags)
+        canvas.move(item, self.coord[0], self.coord[1])
+        return [item]
 
-class VInst(VDevice):
-    """instance:
-        * first item in all items is main frame item"""
-    def __init__(self, c, did, coord, canvas):
-        super(VDevice, self).__init__(c, did, coord, canvas)
-        self.tags.append('inst')
-        self._config = {}
-        self.place_pin()
-    def place_pin(self, config_file=None):
-        if config_file:
-            #config_pin_from_file()
-            pass
-        else:
-            for port in self.ref_module.port_list:
-                if port.ptype == "I":
-                    self.pin_config['l'].append(port.name)
-                    self.pin.append(port.vpin('l', coord))
-                else:
-                    self.pin['r'].append(port.vpin('r'))
-    def draw_items(self):
-        self.draw_main_frame()
-        self.draw_pin()
-        self.draw_sub_shape()
-        self.draw_text()
-        self.move_all_item()
-    def move_all_item(self):
-        for item in self.all_items:
-            self._move(item)
-    def draw_main_frame(self):
-        item = self.canvas.create_rectangle(self.ref_module.symbol.main_frame.shape, tags=self.tags, disabledoutline='blue')
-        self.all_items.append(item)
-    def draw_pin(self):
-        coord = (0,0)
-        self._draw_pin(self.pin['l'], coord)
-        self._draw_pin(self.pin['r'], coord)
-    def _draw_pin(self, pins, coord):
-        for pin in pins:
-            item = self.canvas.create_polygon(pin.main_frame.shape, tags=pin.tags)
-            self.canvas.move(item, coord[0], coord[1])
-            self.all_items.append(item)
-    def draw_sub_shape(self):
-        pass
-    def draw_text(self):
-        for label in self.text:
-            self.all_items.append(self.canvas.create_text(label['coord'], text=label['text'], tags=self.tags, anchor='nw'))
+class SPinIn(SPin):
+    """实例输入端点：三角形。"""
+    pin_shape_all = {
+            'l': [0,3, 0,0, 6,3, 0,6],
+            'r': [6,3, 6,6, 0,3, 6,0],
+            't': [3,0, 6,0, 3,6, 0,0],
+            'b': [3,6, 0,6, 3,0, 6,6]
+            }
+    def __init__(self, coord, side):
+        super(SPinIn, self).__init__(coord, side)
+        self.tags = ['pin_in', 'cp']
 
-class VUInst(VInst):
-    """view of user module"""
-    _name_coord = (5, 2)
-    def __init__(self, logic, coord, canvas):
-        super(VUInst, self).__init__(logic, coord, canvas)
-        self.arg = arg
-        self.main_frame.shape = [0,0, 50,50]
-        self.sub_shape = []
-        self.text = [{'text':self.name, 'coord':self._name_coord},
-                ]
+class SPinOut(SPin):
+    """实例输出端口：菱形。"""
+    pin_shape_all = {
+            'l': [0,3, 3,0, 6,3, 3,6],
+            'r': [6,3, 3,6, 0,3, 3,0],
+            't': [3,0, 6,3, 3,6, 0,3],
+            'b': [3,6, 0,3, 3,0, 6,3]
+            }
+    def __init__(self, tag, coord, side):
+        super(SPinOut, self).__init__(tag, coord, side)
+        self.tags = ['pin_out', 'cp']
 
 def find_cp(canvas, coord):
     """search for a cp near the cursor, return coord."""

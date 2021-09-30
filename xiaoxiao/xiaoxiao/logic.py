@@ -55,24 +55,6 @@ class Parameters(object):
             self.paras[one] = ''
 
 
-class LModule(object):
-    """docstring for Module"""
-    def __init__(self, mid, name='module'):
-        super(LModule, self).__init__()
-        self.mid = mid
-        self.name = name
-        self.port_list = []
-        self.wire_list = [] # wire means signal and connection
-        self.inst_list = []
-        self.view = None
-        self.p = Parameters()
-    @property
-    def devices(self):
-        return self.port_list + self.wire_list + self.inst_list
-    def _generate_logic(self, p):
-        """ """
-        pass
-
 class LDevice(object):
     """docstring for Module"""
     def __init__(self, dname='device'):
@@ -88,10 +70,9 @@ class LDevice(object):
 
 class LInstance(LDevice):
     """docstring for Instance"""
-    def __init__(self, name, ref_module=None):
-        super(Instance, self).__init__(name)
+    def __init__(self, name):
+        super(LInstance, self).__init__(name)
         self.parameters = {}
-        self.ref_module = ref_module
     def update_config(self, kwgs):
         "element, row, column, rch_count, wch_count"
         for key, value in kwgs.items():
@@ -111,11 +92,11 @@ class LPort(LDevice):
 
 class LPortIn(LPort):
     """docstring for LPortIn"""
-    def __init__(self, did, name='i_', width='1'):
-        super(LPortIn, self).__init__(did, name, width)
+    def __init__(self, name='i_', width='1'):
+        super(LPortIn, self).__init__(name, width)
         
         
-class PipeReg(LModule):
+class PipeReg():
     """pipeline register."""
     def __init__(self):
         super(PipeReg, self).__init__(name="PipeReg")

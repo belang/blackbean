@@ -17,7 +17,7 @@ import sys
 #from tkinter import messagebox as xm
 
 import symbol
-import logic
+#import logic
 import text as xt
 tx = xt.init_text()
 #import action as xa
@@ -26,6 +26,35 @@ tx = xt.init_text()
 #import nfmodel as nfm
 # TODO: remove sys after nuanfeng is setuped to system.
 
+class Parameters(object):
+    """docstring for Parameters"""
+    def __init__(self):
+        super(Parameters, self).__init__()
+        pass
+    def para(self, ars):
+        pass
+    def new(self, *paras_name):
+        for one in paras_name:
+            self.paras[one] = ''
+    def config(self, *paras_name):
+        for one in paras_name:
+            self.paras[one] = ''
+
+
+class VConfig:
+    """graph config options."""
+    def __init__(self):
+        self.show_name = False # show name in graph
+    def config(self, **config):
+        for key, value in config.items():
+            setattr(self, key, value)
+
+class SymbolC(object):
+    """docstring for Symbol"""
+    def __init__(self, color='black'):
+        super(SymbolC, self).__init__()
+        self.color = 'black'
+        self.shape = None
 
 # 约束：constrains on circuit properties.
 def check_attr_name(name):
@@ -63,7 +92,7 @@ class Circuit():
         return self._mid
     def new_module(self, name, canvas):
         """new module"""
-        md = UModule(self.mid(), name, canvas)
+        md = Module(self.mid(), name, canvas)
         self.module_list.append(md)
         return md
     def new_template(self, name, canvas):
@@ -73,7 +102,7 @@ class Circuit():
         return module
     def new_component(self, name, canvas):
         """new module"""
-        module = UModule(name, canvas)
+        module = Module(name, canvas)
         self.module_list.append(module)
         return module
     def get_module_by_index(self, index):
@@ -81,10 +110,21 @@ class Circuit():
 
 class Module(object):
     """docstring for Module"""
-    def __init__(self, canvas):
+    def __init__(self, mid, name, canvas):
         self._did = 0
+        self.mid = mid
+        self.name = name
+        self.dev_type = "User"
+        self.port_list = []
+        self.wire_list = [] # wire means signal and connection
+        self.inst_list = []
+        self.view = None
+        #self.p = Parameters()
         self.canvas = canvas
-        self.symbol = None
+        self.symbol = symbol.SModule()
+    @property
+    def devices(self):
+        return self.port_list + self.wire_list + self.inst_list
     def did(self):
         """increase module identifer and return new id."""
         self._did += 1
@@ -101,79 +141,143 @@ class Module(object):
         return dev
     def new_inst(self, c, name, coord, ref_module):
         """new instance."""
-        dev = Instance(c, self.did, name, coord, ref_module)
+        dev = Instance(c, self.did, name, coord, self.canvas, ref_module)
         self.devices.append(dev)
-        dev.graph.draw()
+        dev.draw()
         return dev
-
-class UModule(Module, logic.LModule):
-    """docstring for UModule"""
-    def __init__(self, mid, name, canvas):
-        Module.__init__(self, canvas)
-        logic.LModule.__init__(self, name)
-        # super(UModule, self).__init__(mid, canvas)
-        # self.logic = logic.LModule(name)
-        self.symbol = symbol.VUInst
     def update_symbol(self):
         """supdate symbol manully after modify ports of module"""
-        pass
+        self.place_pin()
     def place_pin(self, config_file=None):
         if config_file:
             #config_pin_from_file()
             pass
         else:
-            for port in self.logic.port_list:
-                self.pin['t'].append(port.id)
-        
+            self.symbol.init_pin_placement(self.port_list)
+
 class Device(object):
     """docstring for Device"""
-    def __init__(self, c, did):
+    def __init__(self, c, did, name, coord, canvas):
         super(Device, self).__init__()
+        self._fp_shape = (-3,-3, 3,3)
+        self.config = VConfig()
+        self.symbol= None
         self.c = c
         self.did = did
+        self.name = name
+        self.coord = coord
+        self.canvas = canvas
+        self.main_frame = SymbolC(color='black')
+        self._item_fp = [] #[id1, id2...]
+        self._item_main = []
+        #self._fp_coords = [] #[(x1,y1), (x2,y2)...]
+        self.tags = [f'id={did}']
+    @property
+    def all_items(self):
+        return self._item_main + self._item_fp
+    def draw(self):
+        self.draw_items()
+        self.move_all_items()
+    def draw_items(self):
+        self.draw_main_frame()
+        self.draw_fp()
+    def move_all_items(self):
+        """move all items."""
+        for item in self.all_items:
+            self.canvas.move(item, self.coord[0], self.coord[1])
+    def get_all_cp(self):
+        pass
+    def deactive(self):
+        for item in self._item_fp:
+            self.canvas.itemconfig(item, state='hidden')
+            #self.canvas.itemconfigure(item, width=0, fill=self.main_frame.color)
+    def active(self):
+        for item in self._item_fp:
+            #self.canvas.itemconfigure(item, width=1, fill=self.main_frame.color)
+            self.canvas.itemconfig(item, state='normal')
+    def _move(self, item):
+        self.canvas.move(item, self.coord[0], self.coord[1])
+    def mouse_in(self, e):
+        """on device"""
+        self.c.mouse_enter_item(self)
+    def mouse_ou(self, e):
+        """leave device"""
+        self.c.mouse_leave_item(self)
+    def draw_fp(self):
+        """draw flag points."""
+        length = len(self.symbol.main_frame)
+        i = 0
+        while i < length:
+            x = self.symbol.main_frame[i]
+            i += 1
+            y = self.symbol.main_frame[i]
+            i += 1
+            item = self.canvas.create_rectangle(self._fp_shape, fill='light blue', tags=tx.TagFlagPoint, state='disabled')
+            self._item_fp.append(item)
+            self.canvas.move(item, x, y)
 
-class PortIn(Devicelogic.LPortIn, symbol.VPortIn):
+class PortIn(Device):
     """docstring for PortIn"""
     def __init__(self, c, did, name, width, coord, canvas):
-        super(PortIn, self).__init__(c, did)
-        self.logic = logic.LPortIn(name, width)
-        self.symbol= symbol.VPortIn(c, coord, canvas)
+        super(PortIn, self).__init__(c, did, name, coord, canvas)
+        self.width = width
+        self.symbol= symbol.VPortIn()
+        self.tags.append('cp')
+        self.tags.append('dev=input')
+        self.pin_symbol = symbol.SPinIn
+    def draw_main_frame(self):
+        item = self.canvas.create_polygon(self.symbol.main_frame, fill=self.main_frame.color, tags=self.tags, disabledoutline='blue')
+        #self.canvas.move(item, self.coord[0], self.coord[1])
+        self.canvas.tag_bind(item, sequence='<Enter>', func=self.mouse_in, add=None)
+        self.canvas.tag_bind(item, sequence='<Leave>', func=self.mouse_ou, add=None)
+        self._item_main.append(item)
+    def gen_pin_symbol(self, coord, side):
+        return self.pin_symbol(coord, side)
 
-class Wire():
-    """docstring for Wire"""
-    def __init__(self, module, name='w_'):
-        super(Wire, self).__init__(module, name)
-        pass
-
-class Instance():
+class Instance(Device):
     """docstring for Instance"""
-    def __init__(self, c, did, name='U_', coord=(0,0), rm_id=0, ref_module=None):
-        super(Instance, self).__init__(c, did)
+    def __init__(self, c, did, name, coord, canvas, ref_module=None):
+        super(Instance, self).__init__(c, did, name, coord, canvas)
         #self.p = logic.Parameters()
         #self.c = symbol.VConfig()
-        self.rm_id = rm_id
-        self.logic = logic.LInstance(name, coord, ref_module)
-        self.symbol = VInst(c, did)
-    def updata_ref_module(self):
-        md = c.find_module_by_id(self.rm_id)
-        if not md:
-            raise ValueError("module not found")
-        self.ref_module = md
+        self.ref_module = ref_module
+        self.symbol = ref_module.symbol
+        #self.symbol = symbol.VInst(c, did)
+        self.main_frame.color = 'white'
+        self.tags.append('inst')
+        self.text = [{'text':self.name, 'coord':self.symbol._name_coord},]
+        self._item_pin = []
+        self._item_text = []
+    @property
+    def all_items(self):
+        return self._item_main + self._item_fp + self._item_pin + self._item_text
     def update_config(self, kwgs):
         "element, row, column, rch_count, wch_count"
         for key, value in kwgs.items():
             if key in self.parameters:
                 setattr(self, key, value)
-    def generate(self):
-        """generate instance by module parameters."""
-        self.ref_module._generate_logic(self.p) # parameter is about logic
-        self.symbol = self.ref_module.symbol(self.c, self.canvas) # config is about symbol
+    def draw_items(self):
+        self.draw_main_frame()
+        self.draw_pin()
+        self.draw_sub_shape()
+        self.draw_text()
+    def draw_main_frame(self):
+        item = self.canvas.create_rectangle(self.symbol.main_frame, fill=self.main_frame.color,tags=self.tags)
+        self._item_main.append(item)
+    def draw_pin(self):
+        for pin in self.symbol.pin_symbols:
+            items = pin.draw(self.tags, self.canvas)
+            self._item_pin.extend(items)
+    def draw_sub_shape(self):
+        pass
+    def draw_text(self):
+        for label in self.text:
+            self._item_text.append(self.canvas.create_text(label['coord'], text=label['text'], tags=self.tags, anchor='nw'))
 
-class UInst(Instance):
-    """Instance of user module."""
-    def __init__(self, arg):
-        super(UInst, self).__init__()
-        self.arg = arg
+class Wire():
+    """docstring for Wire"""
+    def __init__(self, module, name='w_'):
+        super(Wire, self).__init__(module, name)
         pass
 
 class PipeReg(Instance):
@@ -182,6 +286,15 @@ class PipeReg(Instance):
         super(PipeReg, self).__init__(module, name)
         self.ref_design = 'PipeReg'
         self.graph = xg.GPipeReg(coord, module.canvas, self)
+
+class Pin(object):
+    """docstring for Pin"""
+    def __init__(self, port, coord, loc):
+        super(Pin, self).__init__()
+        self.port = port
+        self.loc = loc
+        self.symbol = symbol.VPin()
+        self.coord = coord
 
 if __name__ == "__main__":
     print("circuit.py")

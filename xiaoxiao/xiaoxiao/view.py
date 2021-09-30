@@ -183,11 +183,10 @@ class View(object):
         """激活器件。当前器件或当前canvas选中的器件。"""
         if item_id is not None:
             if self.project.circuit.cur_device:
-                if item_id in self.project.circuit.cur_device.graph.all_items:
+                if item_id in self.project.circuit.cur_device.all_items:
                     return
             self.project.circuit.active_device(item_id)
-        self.mw.aw.active_device(self.project.circuit.cur_device)
-        lg.debug("激活器件: %s", self.project.circuit.cur_device.name)
+            self.active_device()
     def active_device(self, dev=None):
         """激活器件。当前器件或当前canvas选中的器件。"""
         if dev:

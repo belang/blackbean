@@ -250,8 +250,8 @@ class AttrWin(XWin):
             # self.active_output(device)
         # elif isinstance(device, circuit.Wire):
             # self.active_wire(device)
-        # elif isinstance(device, circuit.Inst):
-            # self.active_instance(device)
+        elif isinstance(device, circuit.Instance):
+            self.active_instance(device)
         # elif isinstance(device, circuit.Regfile):
             # self.active_regfile(device)
         else:
@@ -335,25 +335,24 @@ class AttrWin(XWin):
 
 class SubAttrFrame(Frame):
     """电路逻辑对象的基本属性：
-        lo,logic: 指向电路逻辑对象
+        dev: 指向电路逻辑对象
         name: 属性框内的名称，初始化是模块逻辑名称。"""
     def __init__(self, master):
         super(SubAttrFrame, self).__init__(master)
         #self.mw = master.cc
         self.view = master.view
-        self.view = master.view
-        self.logic = None
+        self.dev = None
     def _layout(self):
         """layout"""
         body = Frame(self)
         self.body(body)
         body.pack(side=TOP)
         self.buttonbox()
-    def set_attr(self, logic):
+    def set_attr(self, dev):
         """set_attr"""
-        self.logic = logic
+        self.dev = dev
         self.name_entry.delete(0, tk.END)
-        self.name_entry.insert(0, self.logic.name)
+        self.name_entry.insert(0, self.dev.name)
         self.init_value()
     def init_value(self):
         """initial device value"""
@@ -400,10 +399,16 @@ class ProjectAttrFrame(SubAttrFrame):
     def reset(self):
         """reset"""
         self.init_value(self.view.project)
+    def set_attr(self, dev):
+        """set_attr"""
+        self.dev = dev
+        self.name_entry.delete(0, tk.END)
+        self.name_entry.insert(0, self.dev.name)
+        self.init_value()
     def init_value(self):
         """set default value"""
         self.dir_entry.delete(0, tk.END)
-        self.dir_entry.insert(0, self.logic.dir)
+        self.dir_entry.insert(0, self.dev.dir)
 
 class ModuleAttrFrame(SubAttrFrame):
     """模块属性结构：
@@ -429,8 +434,8 @@ class ModuleAttrFrame(SubAttrFrame):
         box.grid(row=1, column=0, columnspan=2)
         box = Button(btbox, text=tx.aw.importPin, width=20, command=self.import_pin)
         box.grid(row=2, column=0, columnspan=2)
-        #box = Button(btbox, text=tx.aw.initView, width=20, command=self.view.init_instance_view)
-        #box.grid(row=3, column=0, columnspan=2)
+        box = Button(btbox, text=tx.aw.initView, width=20, command=self.init_view)
+        box.grid(row=3, column=0, columnspan=2)
         btbox.pack()
     def ok(self):
         """docstring for ok"""
@@ -441,6 +446,12 @@ class ModuleAttrFrame(SubAttrFrame):
     def reset(self):
         """reset"""
         pass
+    def set_attr(self, dev):
+        """set_attr"""
+        self.dev = dev
+        self.name_entry.delete(0, tk.END)
+        self.name_entry.insert(0, self.dev.name)
+        self.init_value()
     # def init_value(self, module):
         # """set default value"""
         # self.set_name(module.name)
@@ -464,6 +475,9 @@ class ModuleAttrFrame(SubAttrFrame):
         DiaSelPinFile(self, data)
         ffull_name = data[0]
         self.view.config_pin_from_file(ffull_name)
+    def init_view(self):
+        """init the view of module"""
+        self.dev.place_pin()
     def active_attr(self, attr):
         """显示属性"""
         if self.cur_attr is not None:
@@ -478,9 +492,6 @@ class ModuleAttrFrame(SubAttrFrame):
         if attr is self.cur_attr:
             attr.pack_forget()
             self.cur_attr = None
-    def append_self_instance_inst(self, inst):
-        """增加本模块被实例化的一个对象"""
-        self.self_instance_inst_list.append(inst)
 
 class DevAttrFrame(SubAttrFrame):
     """基本器件属性框架。
@@ -525,7 +536,7 @@ class SingleDevAttrFrame(DevAttrFrame):
     def init_value(self):
         """name, width"""
         self.width_entry.delete(0, tk.END)
-        self.width_entry.insert(0, self.logic.width)
+        self.width_entry.insert(0, self.dev.width)
         self.init_sd()
     def init_sd(self):
         """initial single"""
@@ -590,8 +601,8 @@ class InstanceAttrFrame(DevAttrFrame):
         self.ref_name  = Label(master, text='')
         self.ref_name.grid(row=2, column=1)
     def init_value(self):
-        self.ref_type.config(text=self.logic.ref_module.source)
-        self.ref_name.config(text=self.logic.ref_module.name)
+        self.ref_type.config(text=self.dev.ref_module.dev_type)
+        self.ref_name.config(text=self.dev.ref_module.name)
 
 class RegfileAttrFrame(DevAttrFrame):
     """模块实例属性"""
@@ -628,11 +639,11 @@ class RegfileAttrFrame(DevAttrFrame):
         self.column   .delete(0, tk.END)
         self.rch_count.delete(0, tk.END)
         self.wch_count.delete(0, tk.END)
-        self.element  .insert(0, self.logic.element  )
-        self.row      .insert(0, self.logic.row      )
-        self.column   .insert(0, self.logic.column   )
-        self.rch_count.insert(0, self.logic.rch_count)
-        self.wch_count.insert(0, self.logic.wch_count)
+        self.element  .insert(0, self.dev.element  )
+        self.row      .insert(0, self.dev.row      )
+        self.column   .insert(0, self.dev.column   )
+        self.rch_count.insert(0, self.dev.rch_count)
+        self.wch_count.insert(0, self.dev.wch_count)
     def apply(self):
         """apply"""
         config = {
@@ -690,7 +701,7 @@ class BundleReg(DevAttrFrame):
         tscrollbar.grid(     row=2, column=3)
         #hlayout.grid(row=1, column=0, columnspan=2)
     def init_value(self):
-        for ele in self.logic.elements:
+        for ele in self.dev.elements:
             self.name_list.insert(END, ele.name)
             self.width_list.insert(END, ele.width)
             self.reset_list.insert(END, ele.reset)
