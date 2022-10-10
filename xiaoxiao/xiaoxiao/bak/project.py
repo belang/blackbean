@@ -13,20 +13,17 @@ import logging as lg
 
 from tkinter import messagebox as xm
 
-import circuit
-import lib.lib
-#import component
+import view as xv
 import text as xt
 tx = xt.init_text()
 
 
 class Project(object):
     """docstring for Project"""
-    def __init__(self):
-        self._name = 'project'
+    def __init__(self, ac):
+        self.ac = ac
+        self._name = ''
         self._dir = '.'
-        self.defaul_lib = lib.lib.Lib()
-        self.circuit = None
         self.is_changed = False
     @property
     def name(self):
@@ -61,16 +58,13 @@ class Project(object):
         return join(self.dir, self.name)
 
     def exist(self):
-        """circuit save the data."""
-        return self.circuit is not None
-    def new_project(self, v, name, pdir):
-        self.circuit = circuit.Circuit(v)
+        return self._name != ''
+    def new_project(self, name, pdir):
         return self.update_project(name, pdir)
-    def close(self):
+    def close_project(self):
         """set project name to empty string"""
         self._name = ''
         self._dir = '.'
-        self.circuit = None
     def save_project(self, name, pdir):
         """get a right project file name"""
         return self.update_project(name, pdir)
@@ -88,6 +82,15 @@ class Project(object):
         self._dir = fdir
         self._name = name
         return True
+    # def ask_save_project(self):
+        # """docstring for ask_save_project"""
+        # data = {}
+        # xv.DiaSaveProject(self.ac.vw, data)
+        # return data
+    # def ask_project_name(self):
+        # data = {}
+        # xv.DiaNewProject(self.ac.vw, data)
+        # return data
 
 
 

@@ -24,7 +24,6 @@ class VDevice(object):
     _fp_shape = (-3,-3, 3,3)
     def __init__(self, c, did, coord, canvas):
         super(VDevice, self).__init__()
-        self.config = VConfig()
         self.c = c
         self.coord = coord
         self.canvas = canvas
@@ -61,22 +60,28 @@ class VDevice(object):
         """leave device"""
         self.c.mouse_leave_item(self)
 
-class VPort(VDevice):
+class SPort(VDevice):
     """端口。
     * shape 是图形主要外形。
     """
     def __init__(self, c, did, coord, canvas):
-        super(VPort, self).__init__(c, did, coord, canvas)
+        super(SPort, self).__init__(c, did, coord, canvas)
         self.tags.append('cp')
     def vpin(self, side, coord):
         pass
 
-class VPortIn():
+class SPortBundle():
+    """port bundle。 """
+    def __init__(self):
+        super(SPortBundle, self).__init__()
+        self.main_frame = [15,5, 10,10, 5,10, 0,5, 5,0, 10,0]
+
+class SPortIn():
     """端口。
     * main_frame_shape 是图形主要外形。
     """
     def __init__(self):
-        super(VPortIn, self).__init__()
+        super(SPortIn, self).__init__()
         self.main_frame = [15,5, 10,10, 0,10, 0,0, 10,0]
 
 class VWire(VDevice):
@@ -180,10 +185,11 @@ class SModule():
         #self.pin_items = []
         self.pins_location = [[],[],[],[]] # [l, r, t, b]
         #self.item_block.append(self.pin_items)
-        self.main_frame = []
+        self.main_frame = [0, 0, 40, 40]
         self.pin_symbols = []
     def init_pin_placement(self, port_list):
         """reset placement. defaltly place all pins on top."""
+        self.pin_symbols.clear()
         self.pins_location = [[],[],[],[]] # [l, r, t, b]
         for port in port_list:
             self.pins_location[2].append(port)
@@ -193,7 +199,7 @@ class SModule():
         lpins = self.pins_location[0]
         rpins = self.pins_location[1]
         tpins = self.pins_location[2]
-        bpins = self.pins_location[3]
+        dpins = self.pins_location[3]
         #重新计算实例大小。
         #初始化尺寸_size = 20 x 20;
         #左右两边最多的引脚数决定长度：20 + len * 8。
@@ -224,7 +230,7 @@ class SModule():
             x += self._pin_space[0]
         x = 0
         y = self.size[1]
-        for port in bpins:
+        for port in dpins:
             self.pin_symbols.append(port.gen_pin_symbol((x,y), 'b'))
             x += self._pin_space[0]
         self.main_frame = [0, 0, self.size[0], self.size[1]]
@@ -249,6 +255,18 @@ class SPin():
         item = canvas.create_polygon(self.pin_shape_all[self.side], fill='black', tags=self.tags+tags)
         canvas.move(item, self.coord[0], self.coord[1])
         return [item]
+
+class SPinBundle(SPin):
+    """实例输入端点：三角形。"""
+    pin_shape_all = {
+            'l': [0,3, 3,0, 6,3, 3,6],
+            'r': [6,3, 3,6, 0,3, 3,0],
+            't': [3,0, 6,3, 3,6, 0,3],
+            'b': [3,6, 0,3, 3,0, 6,3]
+            }
+    def __init__(self, coord, side):
+        super(SPinBundle, self).__init__(coord, side)
+        self.tags = ['pin_bundle', 'cp']
 
 class SPinIn(SPin):
     """实例输入端点：三角形。"""

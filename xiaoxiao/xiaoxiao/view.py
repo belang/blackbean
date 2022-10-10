@@ -34,7 +34,6 @@ class View(object):
         self.temp_coord = []
         self.temp_item = []
         self.md_connected_wire = []  # 与当前移动器件相连的线did, 连接点移动前的中心坐标, 线的连接点顺序:1=正序（连接点是线的最后一个坐标点）-1=倒序
-        self._mouse_enter_item = None
     def init_gui(self):
         """start gui"""
         self.root = tk.Tk()
@@ -279,6 +278,15 @@ class View(object):
         self.active_device(dev)
         lg.info(f"{tx.InfoCreateInput}: {name}")
         self.end_action()
+    def create_port_bundle(self, e):
+        """以默认名称创建接口"""
+        name='b_'
+        coord = (e.x, e.y)
+        #self.deactive_device()
+        dev = self.project.circuit.cur_module.new_port_bundle(self, name, coord)
+        self.active_device(dev)
+        lg.info(tx.InfoCreateDevice.format(device=tx.DeviceType.PortBundle, name=name))
+        self.end_action()
     ## assist function
     def find_module_by_id(self, mid):
         for md in self.circuit.module_list:
@@ -292,7 +300,7 @@ class View(object):
     def bind_mouse_default_action(self):
         """bind"""
         self.cur_state = 'idle'
-        self.project.circuit.cur_module.canvas.bind("<ButtonPress-1>", self._bind_button_left_click)
+        self.project.circuit.cur_module.canvas.bind("<ButtonPress-1>", self.mouse_select_dev)
         #self.bind("<ButtonPress-1>", self._bind_select) # this does not work
         #self.project.circuit.cur_module.canvas.bind("<ButtonRelease-1>", self._button_release)
         #self.project.circuit.cur_module.canvas.bind("<ButtonRelease-3>", self._cancle)
@@ -303,20 +311,10 @@ class View(object):
     def bind_top_key_default(self):
         """bind"""
         self.root.bind("<Escape>", self._escape)
-    def _bind_button_left_click(self, event):
+    def mouse_active_module(self, event):
         '''select module.'''
-        if self._mouse_enter_item:
-            self.active_device(self._mouse_enter_item)
-            return
         self.deactive_device()
         self.active_module()
-    def mouse_enter_item(self, dev):
-        """docstring for mouse_enter_item"""
-        self._mouse_enter_item = dev
-    def mouse_leave_item(self, dev):
-        """docstring for mouse_enter_item"""
-        if self._mouse_enter_item == dev:
-            self._mouse_enter_item = None
     def bind_new_input(self):
         """设置鼠标行为，选择器件起始点。"""
         self._escape(None)
@@ -325,6 +323,9 @@ class View(object):
         """设置鼠标行为，选择器件起始点。"""
         self._escape(None)
         self.project.circuit.cur_module.canvas.bind("<ButtonPress-1>", self.create_output)
+    def bind_new_port_bundle(self):
+        self._escape(None)
+        self.project.circuit.cur_module.canvas.bind("<ButtonPress-1>", self.create_port_bundle)
     def bind_new_inst(self):
         """设置鼠标行为，选择器件起始点。"""
         self._escape(None)

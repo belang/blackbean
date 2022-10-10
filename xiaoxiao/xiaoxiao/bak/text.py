@@ -42,7 +42,7 @@ def init_text(lan=None):
             ACTCreateDevice = 2
 
             InfoCreateModule = 'create module' # 创建模块
-            InfoCreateDevice = 'create {device}: {name}'
+            InfoCreateDevice = 'create device' # 创建模块
             InfoCreateInput = 'create input' # 创建输入
             InfoCreateReg = 'create register'
             InfoCreateRegfile = 'create regfile'
@@ -97,13 +97,11 @@ def init_text(lan=None):
                 export      = "expo"
                 inport      = "impo"
                 module      = "NewM"
-                template    = "NewT"
                 inst        = "inst"
                 regb        = "BReg"
                 regfile     = "RF"
-                input       = "PIn"
-                output      = "POu"
-                interface   = "PIF"
+                input       = "inpu"
+                output      = "outp"
                 wire        = "wire"
                 delete      = "dele"
                 move        = "move"
@@ -131,14 +129,6 @@ def init_text(lan=None):
             class Action:
                 newCircuit  = "new circuit"
                 newProject  = "new project" # "新建工程"
-                activeModule = "active module"
-            class DeviceType:
-                PortBundle = "PortBundle"
-            class Word:
-                Sel = 'sel'
-                SelBundle = 'select bundle'
-                P = 'P'
-                N = 'N'
             wt = WindowTools()
             aw = AttrWin()
             ac = Action()
